@@ -1,6 +1,6 @@
 # Checklist de módulos — Radamantis
 
-Estado inicial: scaffold creado, 0 módulos con lógica implementada.
+Última actualización: motor LLM (Claude) + core (orquestador/router/sesión) implementados y con tests pasando (9/9, `npm test`).
 
 ## Integraciones (canales)
 | Módulo | Path | Estado |
@@ -40,10 +40,21 @@ Estado inicial: scaffold creado, 0 módulos con lógica implementada.
 ## Motor LLM
 | Adaptador | Path | Estado |
 |---|---|---|
-| Claude 3.5 Sonnet | `src/llm/claude_adapter.js` | ⬜ Pendiente |
-| OpenAI GPT-4o | `src/llm/openai_adapter.js` | ⬜ Pendiente |
-| Gemini 1.5 Pro | `src/llm/gemini_adapter.js` | ⬜ Pendiente |
-| Grok | `src/llm/grok_adapter.js` | ⬜ Pendiente |
+| Contrato común (types, LLMProviderError) | `src/llm/types.js` | ✅ Implementado |
+| Router multi-modelo (fallback por env) | `src/llm/index.js` | ✅ Implementado |
+| Claude 3.5 Sonnet | `src/llm/claude_adapter.js` | ✅ Implementado + tests |
+| OpenAI GPT-4o | `src/llm/openai_adapter.js` | ⬜ Pendiente (stub tipado) |
+| Gemini 1.5 Pro | `src/llm/gemini_adapter.js` | ⬜ Pendiente (stub tipado) |
+| Grok | `src/llm/grok_adapter.js` | ⬜ Pendiente (stub tipado) |
+
+## Core (orquestador)
+| Módulo | Path | Estado |
+|---|---|---|
+| Envelope normalizado (NormalizedMessage/OutgoingMessage/Session) | `src/core/types.js` | ✅ Implementado |
+| Store de sesiones (memoria compartida + KV) | `src/core/session.js` | ✅ Implementado |
+| Pipeline mensaje→LLM→respuesta | `src/core/orchestrator.js` | ✅ Implementado + tests |
+| Dispatch de webhooks por canal | `src/core/router.js` | ✅ Implementado (a la espera de integraciones reales) |
+| Entry point Cloudflare Worker (fetch/scheduled) | `src/core/index.js` | ✅ Implementado |
 
 ## Admin
 | Módulo | Path | Estado |
