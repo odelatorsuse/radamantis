@@ -1,0 +1,14 @@
+name = "radamantis-admin"
+main = "index.js"
+compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Portal general (Oscar / administrador de la cuenta). Lista todos los
+# negocios definidos en ../businesses/*.json (ver businesses.generated.js,
+# se regenera con `node ../scripts/gen-wrangler-envs.mjs`).
+#
+# Deploy: desde esta carpeta -> npx wrangler deploy
+# (usa las mismas CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID que los bots).
+
+[vars]
+ENVIRONMENT = "production"

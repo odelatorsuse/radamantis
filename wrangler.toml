@@ -1,11 +1,15 @@
 name = "radamantis"
 main = "src/core/index.js"
 compatibility_date = "2026-08-01"
+compatibility_flags = ["nodejs_compat"]
 
 [vars]
 ENVIRONMENT = "development"
 
-# KV / D1 / R2 / Queues bindings se agregan conforme se integre cada superpoder
+# KV / D1 / R2 / Queues bindings compartidos por defecto (heredados salvo que
+# un [env.X] los redefina). Crear con:
+#   npx wrangler kv namespace create SESSIONS
+# y pegar el "id" resultante aquí.
 # [[kv_namespaces]]
 # binding = "SESSIONS"
 # id = ""
@@ -14,3 +18,33 @@ ENVIRONMENT = "development"
 # binding = "DB"
 # database_name = "radamantis-db"
 # database_id = ""
+
+# ============================================================================
+# NEGOCIOS (un Worker por negocio, un [env.<slug>] por negocio).
+# NO editar a mano entre las marcas BEGIN/END: se regenera con
+#   node scripts/gen-wrangler-envs.mjs
+# a partir de businesses/*.json. Los secrets (ANTHROPIC_API_KEY,
+# WHATSAPP_ACCESS_TOKEN, etc.) NO van aquí — se cargan por negocio con
+# `npx wrangler secret put <NOMBRE> --env <slug>` (ver docs/DEPLOY.md).
+# ============================================================================
+# BEGIN GENERATED ENVS
+[env.ch-veterinarios]
+name = "radamantis-ch-veterinarios"
+
+[env.ch-veterinarios.vars]
+ENVIRONMENT = "production"
+BUSINESS_SLUG = "ch-veterinarios"
+BUSINESS_DISPLAY_NAME = "CH Veterinarios"
+BUSINESS_VERTICAL = "clinica"
+VOICE_TONE = "calido"
+SYSTEM_PROMPT_EXTRA = "Eres el asistente de una clínica veterinaria. Ayuda a agendar citas, resolver dudas generales sobre servicios y precios (si no los sabes con certeza, ofrece confirmarlos), y detecta urgencias (mascota herida, intoxicada, en labor de parto complicada) para escalar a un humano de inmediato."
+LLM_DEFAULT_PROVIDER = "claude"
+LLM_MONTHLY_BUDGET_USD = "20"
+ADMIN_WHATSAPP_NUMBER = ""
+
+# KV propio del negocio (aislamiento de sesiones/métricas por bot).
+# Crear con: npx wrangler kv namespace create SESSIONS --env ch-veterinarios
+# [[env.ch-veterinarios.kv_namespaces]]
+# binding = "SESSIONS"
+# id = ""
+# END GENERATED ENVS

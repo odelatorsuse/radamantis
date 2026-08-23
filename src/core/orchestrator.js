@@ -8,13 +8,20 @@
 
 import { createLLMRouter, LLMProviderError } from "../llm/index.js";
 import { createSessionStore, createEmptySession, appendMessage } from "./session.js";
+import { createMetricsStore } from "./metrics.js";
 
-// Prompt base de "blindaje anti-invento" (superpoder #1). La versión completa
-// con RAG estricto vive en src/superpowers/blindaje; esto es el piso mínimo
+// Prompt base de "blindaje anti-invento" (superpoder #1) + "voz de marca"
+// (superpoder #6, piso mínimo vía env vars del negocio). La versión completa
+// con RAG estricto vive en src/superpowers/blindaje; esto es el mínimo
 // mientras ese módulo se implementa.
-const DEFAULT_SYSTEM_PROMPT = `Eres el asistente virtual de la marca. Responde de forma clara, concisa y en el idioma del usuario.
+function buildSystemPrompt(env) {
+  const businessName = env?.BUSINESS_DISPLAY_NAME || "la marca";
+  const extra = env?.SYSTEM_PROMPT_EXTRA || "";
+  return `Eres el asistente virtual de ${businessName}. Responde de forma clara, concisa y en el idioma del usuario.
 Si no tienes certeza sobre un dato (precios, disponibilidad, políticas, horarios), NO inventes: dilo explícitamente
-y ofrece confirmarlo ("déjame confirmarlo y te aviso") en lugar de adivinar.`;
+y ofrece confirmarlo ("déjame confirmarlo y te aviso") en lugar de adivinar.
+${extra}`.trim();
+}
 
 /**
  * @param {import("./types.js").NormalizedMessage} message
@@ -56,7 +63,7 @@ export async function handleIncomingMessage(message, env, opts = {}) {
   try {
     response = await llmRouter.chat({
       messages: chatMessages,
-      system: opts.systemPrompt || DEFAULT_SYSTEM_PROMPT,
+      system: opts.systemPrompt || buildSystemPrompt(env),
     });
   } catch (err) {
     // No persistimos el turno fallido en el historial del usuario; se guarda
@@ -73,10 +80,16 @@ export async function handleIncomingMessage(message, env, opts = {}) {
   appendMessage(session, "assistant", response.text);
   await sessionStore.save(session);
 
+  const metrics = createMetricsStore(env);
+  await metrics.recordMessage({
+    externalUserId: message.externalUserId,
+    costUsd: response.usage.costUsd,
+  });
+
   // TODO(vigilante): analizar sentimiento de `message.text` y de la sesión;
   //   si hay frustración/riesgo, disparar alerta push a WhatsApp admin aquí.
-  // TODO(costos_presupuesto): registrar response.usage.costUsd contra el
-  //   presupuesto mensual (env.LLM_MONTHLY_BUDGET_USD) y cortar/alertar si excede.
+  // TODO(costos_presupuesto): cortar/alertar si costUsdThisMonth supera
+  //   env.LLM_MONTHLY_BUDGET_USD (metrics.snapshot() ya trae el acumulado).
 
   return {
     channel: message.channel,

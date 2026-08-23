@@ -1,0 +1,16 @@
+{
+  "slug": "mi-negocio",
+  "displayName": "Nombre del negocio",
+  "vertical": "restaurante",
+  "voiceTone": "calido",
+  "systemPromptExtra": "Instrucciones específicas de este negocio: horarios, políticas, tono, datos que NUNCA debe inventar.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

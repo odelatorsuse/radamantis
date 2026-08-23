@@ -1,6 +1,6 @@
 # Checklist de módulos — Radamantis
 
-Última actualización: motor LLM (Claude) + core (orquestador/router/sesión) implementados y con tests pasando (9/9, `npm test`).
+Última actualización: arquitectura multi-tenant (un Worker por negocio) + 3 vistas admin (dashboard general, overview por bot, conexiones) + deploy validado offline (`wrangler deploy --dry-run`). 15/15 tests pasando (`npm test`). Deploy real pendiente de ejecutarse (ver `docs/DEPLOY.md` — requiere correrlo desde tu máquina, el entorno de Claude no tiene salida de red a `api.cloudflare.com`).
 
 ## Integraciones (canales)
 | Módulo | Path | Estado |
@@ -56,17 +56,31 @@
 | Dispatch de webhooks por canal | `src/core/router.js` | ✅ Implementado (a la espera de integraciones reales) |
 | Entry point Cloudflare Worker (fetch/scheduled) | `src/core/index.js` | ✅ Implementado |
 
-## Admin
+## Admin / multi-tenant (un Worker por negocio, como Forja)
 | Módulo | Path | Estado |
 |---|---|---|
-| Dashboard | `admin/dashboard` | ⬜ Pendiente |
-| Overview | `admin/overview` | ⬜ Pendiente |
+| Config por negocio (JSON) | `businesses/*.json` | ✅ Implementado (`_template.json` + ejemplo `ch-veterinarios.json`) |
+| Generador de `wrangler.toml` multi-env | `scripts/gen-wrangler-envs.mjs` | ✅ Implementado (idempotente, valida bindings) |
+| Dashboard por bot (`/admin/overview`) | `src/core/adminUI.js`, `src/core/metrics.js` | ✅ Implementado + tests (métricas en memoria, KV pendiente) |
+| Marketplace de conexiones (`/conexiones`) | `src/core/adminUI.js` | ✅ Implementado (refleja estado real: nada "conectado" aún) |
+| Endpoint de prueba manual (`POST /chat`) | `src/core/index.js` | ✅ Implementado — permite probar el pipeline sin canal real |
+| Panel general "Mis bots" (equivalente `app.forjabots.com/dashboard`) | `admin-dashboard/` (Worker separado) | ✅ Implementado — health check en vivo de cada negocio |
+| Deploy real a Cloudflare | — | ⬜ Pendiente de ejecución (bundling validado offline; falta correr `wrangler deploy` con red real — ver `docs/DEPLOY.md`) |
+| Persistencia (KV para sesiones/métricas) | `src/core/session.js`, `src/core/metrics.js` | ⬜ Pendiente de provisionar (`wrangler kv namespace create`), código ya listo para usarlo |
 
 ## Infraestructura
 | Ítem | Estado |
 |---|---|
 | Repo Git local | ✅ Inicializado |
-| Remoto GitHub | ⬜ Pendiente (falta URL) |
-| Cloudflare Workers config (`wrangler.toml`) | ✅ Base creada |
+| Remoto GitHub (github.com/odelatorsuse/radamantis, branch main) | ✅ Conectado, con push |
+| Cloudflare Workers config (`wrangler.toml`) | ✅ Multi-env, bundling validado offline |
+| Cloudflare — deploy real ejecutado | ⬜ Pendiente (bloqueado desde el entorno de Claude por egress allowlist; correr desde tu máquina) |
 | `.env.example` | ✅ Creado |
+| `wrangler` como devDependency | ✅ Instalado (`npm install`) |
+| Tests unitarios (`npm test`, node:test) | ✅ 15/15 pasando |
 | CI/CD | ⬜ Pendiente |
+
+## Notas para continuar
+- El entorno donde corre Claude tiene lista blanca de red (GitHub, npm, PyPI, registries) que **no incluye `api.cloudflare.com`** — el deploy real siempre se corre del lado del usuario (o pegando la salida de comandos de vuelta a Claude para depurar). Ver `docs/DEPLOY.md`.
+- `config/global.json` tiene el subdominio `workers.dev` en placeholder — hay que completarlo con el subdominio real de la cuenta antes de confiar en las URLs que arma `admin-dashboard`.
+- Cada negocio nuevo = 1 archivo `businesses/<slug>.json` + `node scripts/gen-wrangler-envs.mjs` + `wrangler secret put` + `wrangler deploy --env <slug>` + redeploy de `admin-dashboard` para que aparezca en "Mis bots".

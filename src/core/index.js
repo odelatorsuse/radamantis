@@ -3,18 +3,32 @@
 //
 // Rutas:
 //   GET  /health                  -> liveness check
+//   GET  /admin/overview          -> dashboard del bot (métricas, salud)
+//   GET  /conexiones              -> marketplace de integraciones
+//   POST /chat                    -> prueba manual del pipeline sin canal real
+//                                     body: { "conversationId": "test-1", "text": "hola" }
 //   POST /webhook/:channel        -> dispatch a src/integrations/<channel>
 //
 // El cron diario (superpoder #7 "reporte") se registra vía el handler
 // `scheduled` más abajo cuando se agregue el trigger en wrangler.toml
 // (aún pendiente: [triggers] crons = [...]).
 
-import { handleWebhook, ChannelNotImplementedError } from "./router.js";
+import { handleWebhook, ChannelNotImplementedError, buildTestMessage } from "./router.js";
+import { handleIncomingMessage } from "./orchestrator.js";
+import { createMetricsStore } from "./metrics.js";
+import { renderOverviewPage, renderConexionesPage } from "./adminUI.js";
 
 function json(data, init = {}) {
   return new Response(JSON.stringify(data), {
     ...init,
     headers: { "content-type": "application/json", ...(init.headers || {}) },
+  });
+}
+
+function html(markup, init = {}) {
+  return new Response(markup, {
+    ...init,
+    headers: { "content-type": "text/html; charset=utf-8", ...(init.headers || {}) },
   });
 }
 
@@ -28,7 +42,44 @@ export default {
     const url = new URL(request.url);
 
     if (request.method === "GET" && url.pathname === "/health") {
-      return json({ status: "ok", service: "radamantis", ts: Date.now() });
+      return json({
+        status: "ok",
+        service: "radamantis",
+        business: env?.BUSINESS_SLUG || null,
+        ts: Date.now(),
+      });
+    }
+
+    if (request.method === "GET" && url.pathname === "/admin/overview") {
+      const metrics = createMetricsStore(env);
+      const snapshot = await metrics.snapshot();
+      return html(renderOverviewPage(env, snapshot));
+    }
+
+    if (request.method === "GET" && url.pathname === "/conexiones") {
+      return html(renderConexionesPage(env));
+    }
+
+    if (request.method === "POST" && url.pathname === "/chat") {
+      try {
+        const body = await request.json();
+        if (!body?.conversationId || !body?.text) {
+          return json(
+            { ok: false, error: 'Body requerido: { "conversationId": "...", "text": "..." }' },
+            { status: 400 }
+          );
+        }
+        const message = buildTestMessage({
+          conversationId: body.conversationId,
+          externalUserId: body.externalUserId,
+          text: body.text,
+        });
+        const reply = await handleIncomingMessage(message, env);
+        return json({ ok: true, reply });
+      } catch (err) {
+        console.error("[radamantis] error en /chat:", err);
+        return json({ ok: false, error: err?.message || "Error interno" }, { status: 500 });
+      }
     }
 
     const webhookMatch = url.pathname.match(/^\/webhook\/([a-z_]+)$/);
