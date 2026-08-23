@@ -4,7 +4,7 @@
   "vertical": "clinica",
   "voiceTone": "calido",
   "systemPromptExtra": "Eres el asistente de una clínica veterinaria. Ayuda a agendar citas, resolver dudas generales sobre servicios y precios (si no los sabes con certeza, ofrece confirmarlos), y detecta urgencias (mascota herida, intoxicada, en labor de parto complicada) para escalar a un humano de inmediato.",
-  "llmDefaultProvider": "claude",
+  "llmDefaultProvider": "openai",
   "monthlyBudgetUsd": 20,
   "adminWhatsappNumber": "",
   "channels": {

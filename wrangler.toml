@@ -38,7 +38,7 @@ BUSINESS_DISPLAY_NAME = "CH Veterinarios"
 BUSINESS_VERTICAL = "clinica"
 VOICE_TONE = "calido"
 SYSTEM_PROMPT_EXTRA = "Eres el asistente de una clínica veterinaria. Ayuda a agendar citas, resolver dudas generales sobre servicios y precios (si no los sabes con certeza, ofrece confirmarlos), y detecta urgencias (mascota herida, intoxicada, en labor de parto complicada) para escalar a un humano de inmediato."
-LLM_DEFAULT_PROVIDER = "claude"
+LLM_DEFAULT_PROVIDER = "openai"
 LLM_MONTHLY_BUDGET_USD = "20"
 ADMIN_WHATSAPP_NUMBER = ""
 
