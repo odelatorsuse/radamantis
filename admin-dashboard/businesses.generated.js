@@ -7,7 +7,7 @@ export const businesses = [
     "displayName": "CH Veterinarios",
     "vertical": "clinica",
     "workerName": "radamantis-ch-veterinarios",
-    "overviewUrl": "https://radamantis-ch-veterinarios.TU-SUBDOMINIO.workers.dev/admin/overview",
-    "healthUrl": "https://radamantis-ch-veterinarios.TU-SUBDOMINIO.workers.dev/health"
+    "overviewUrl": "https://radamantis-ch-veterinarios.latinosworkflowmxag.workers.dev/admin/overview",
+    "healthUrl": "https://radamantis-ch-veterinarios.latinosworkflowmxag.workers.dev/health"
   }
 ];
