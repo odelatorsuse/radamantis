@@ -9,6 +9,8 @@
 import { createLLMRouter, LLMProviderError } from "../llm/index.js";
 import { createSessionStore, createEmptySession, appendMessage } from "./session.js";
 import { createMetricsStore } from "./metrics.js";
+import { detectRisk, alertAdmin } from "../superpowers/vigilante/index.js";
+import { detectHandoffRequest, escalate } from "../superpowers/handoff/index.js";
 
 // Prompt base de "blindaje anti-invento" (superpoder #1) + "voz de marca"
 // (superpoder #6, piso mínimo vía env vars del negocio). La versión completa
@@ -86,8 +88,23 @@ export async function handleIncomingMessage(message, env, opts = {}) {
     costUsd: response.usage.costUsd,
   });
 
-  // TODO(vigilante): analizar sentimiento de `message.text` y de la sesión;
-  //   si hay frustración/riesgo, disparar alerta push a WhatsApp admin aquí.
+  // Superpoder vigilante: heurística de riesgo/frustración sobre el mensaje
+  // entrante del usuario. Si hay señal, alerta al admin por WhatsApp — no
+  // bloquea ni altera la respuesta normal al cliente si falla.
+  const risk = detectRisk(message.text);
+  if (risk.risk) {
+    await alertAdmin({ session, messageText: message.text, risk }, env);
+  }
+
+  // Superpoder handoff: detecta pedido explícito de hablar con un humano y
+  // escala con resumen estructurado. Se cuenta en métricas para el dashboard
+  // ("resueltas sin humano" = mensajesHoy - handoffsHoy).
+  const escalatedToHuman = detectHandoffRequest(message.text);
+  if (escalatedToHuman) {
+    await escalate({ session, messageText: message.text }, env);
+    await metrics.recordHandoff();
+  }
+
   // TODO(costos_presupuesto): cortar/alertar si costUsdThisMonth supera
   //   env.LLM_MONTHLY_BUDGET_USD (metrics.snapshot() ya trae el acumulado).
 
@@ -102,6 +119,9 @@ export async function handleIncomingMessage(message, env, opts = {}) {
       outputTokens: response.usage.outputTokens,
       costUsd: response.usage.costUsd,
       stopReason: response.stopReason,
+      riskDetected: risk.risk,
+      riskSeverity: risk.severity,
+      escalatedToHuman,
     },
   };
 }

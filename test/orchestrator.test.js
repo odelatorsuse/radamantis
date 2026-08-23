@@ -55,3 +55,77 @@ test("handleIncomingMessage rechaza contentType no soportado (ej. audio) hasta i
   const msg = { ...buildTestMessage({ conversationId: "conv-3", text: "" }), contentType: "audio", text: undefined };
   await assert.rejects(() => handleIncomingMessage(msg, env), /oido_vista/);
 });
+
+function mockClaudeAndWhatsapp(replyText, onWhatsappSend) {
+  globalThis.fetch = async (url) => {
+    if (typeof url === "string" && url.includes("graph.facebook.com")) {
+      if (onWhatsappSend) onWhatsappSend();
+      return { ok: true, status: 200, text: async () => "" };
+    }
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        model: "claude-3-5-sonnet-20241022",
+        content: [{ type: "text", text: replyText }],
+        stop_reason: "end_turn",
+        usage: { input_tokens: 10, output_tokens: 4 },
+      }),
+    };
+  };
+}
+
+test("handleIncomingMessage dispara vigilante y alerta al admin cuando detecta riesgo alto", async () => {
+  let whatsappCalls = 0;
+  mockClaudeAndWhatsapp("Lamento escuchar eso, vamos a ayudarte ahora mismo.", () => whatsappCalls++);
+
+  const env = {
+    ANTHROPIC_API_KEY: "sk-test",
+    ADMIN_WHATSAPP_NUMBER: "5215500000000",
+    WHATSAPP_PHONE_NUMBER_ID: "1234567890",
+    WHATSAPP_ACCESS_TOKEN: "token-abc",
+  };
+  const msg = buildTestMessage({ conversationId: "conv-vigilante-1", text: "emergencia, mi perro se está muriendo" });
+
+  const reply = await handleIncomingMessage(msg, env);
+
+  assert.equal(reply.meta.riskDetected, true);
+  assert.equal(reply.meta.riskSeverity, "high");
+  assert.equal(whatsappCalls, 1);
+});
+
+test("handleIncomingMessage no dispara vigilante en un mensaje normal", async () => {
+  let whatsappCalls = 0;
+  mockClaudeAndWhatsapp("Claro, ¿qué día te viene bien?", () => whatsappCalls++);
+
+  const env = {
+    ANTHROPIC_API_KEY: "sk-test",
+    ADMIN_WHATSAPP_NUMBER: "5215500000000",
+    WHATSAPP_PHONE_NUMBER_ID: "1234567890",
+    WHATSAPP_ACCESS_TOKEN: "token-abc",
+  };
+  const msg = buildTestMessage({ conversationId: "conv-vigilante-2", text: "hola, ¿tienen citas mañana?" });
+
+  const reply = await handleIncomingMessage(msg, env);
+
+  assert.equal(reply.meta.riskDetected, false);
+  assert.equal(whatsappCalls, 0);
+});
+
+test("handleIncomingMessage dispara handoff y registra la métrica cuando el cliente pide un humano", async () => {
+  let whatsappCalls = 0;
+  mockClaudeAndWhatsapp("Ya te comunico con alguien del equipo.", () => whatsappCalls++);
+
+  const env = {
+    ANTHROPIC_API_KEY: "sk-test",
+    ADMIN_WHATSAPP_NUMBER: "5215500000000",
+    WHATSAPP_PHONE_NUMBER_ID: "1234567890",
+    WHATSAPP_ACCESS_TOKEN: "token-abc",
+  };
+  const msg = buildTestMessage({ conversationId: "conv-handoff-1", text: "quiero hablar con una persona" });
+
+  const reply = await handleIncomingMessage(msg, env);
+
+  assert.equal(reply.meta.escalatedToHuman, true);
+  assert.equal(whatsappCalls, 1);
+});

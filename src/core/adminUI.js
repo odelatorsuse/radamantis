@@ -79,6 +79,12 @@ const BASE_STYLES = `
   .conn-card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; }
   .conn-card .name { font-weight: 600; margin-bottom: 10px; }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px; }
+  .chart { display: flex; align-items: flex-end; gap: 10px; height: 140px; padding-top: 10px; }
+  .chart .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
+  .chart .bar { width: 100%; max-width: 34px; background: linear-gradient(180deg, var(--accent), #b85200); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .chart .bar-count { font-size: 11px; color: var(--muted); }
+  .chart .bar-day { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .badges-cell { display: flex; flex-wrap: wrap; gap: 6px; }
 `;
 
 function page(title, businessName, bodyHtml) {
@@ -96,6 +102,52 @@ ${bodyHtml}
 </html>`;
 }
 
+const DAY_LABELS_ES = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+
+/**
+ * Barras del gráfico de actividad de 7 días. `days` viene más antiguo
+ * primero, hoy al final (ver metrics.js).
+ * @param {import("./metrics.js").DayActivity[]} days
+ */
+function renderActivityChart(days) {
+  if (!days || days.length === 0) {
+    return `<div class="sub">sin datos todavía</div>`;
+  }
+  const max = Math.max(1, ...days.map((d) => d.count));
+  const bars = days
+    .map((d) => {
+      const heightPct = Math.max(4, Math.round((d.count / max) * 100));
+      const dayLabel = DAY_LABELS_ES[new Date(`${d.date}T00:00:00Z`).getUTCDay()];
+      return `
+      <div class="bar-col">
+        <div class="bar-count">${d.count}</div>
+        <div class="bar" style="height:${heightPct}%"></div>
+        <div class="bar-day">${dayLabel}</div>
+      </div>`;
+    })
+    .join("");
+  return `<div class="chart">${bars}</div>`;
+}
+
+// Superpoderes cuyo estado se puede derivar de código/config real (sin
+// inventar "activo" para lo que sigue en STUB). Ver docs/CHECKLIST.md.
+function renderSuperpowersBadges(env) {
+  const hasKv = !!(env?.SESSIONS && typeof env.SESSIONS.get === "function");
+  const items = [
+    { name: "Blindaje anti-invento (piso mínimo)", active: true },
+    { name: "Voz de marca (piso mínimo)", active: !!env?.SYSTEM_PROMPT_EXTRA },
+    { name: "Vigilante (riesgo/frustración)", active: !!env?.ADMIN_WHATSAPP_NUMBER },
+    { name: "Handoff a humano", active: !!env?.ADMIN_WHATSAPP_NUMBER },
+    { name: "Persistencia real (KV)", active: hasKv },
+  ];
+  return `<div class="badges-cell">${items
+    .map(
+      (it) =>
+        `<span class="badge ${it.active ? "ok" : "pending"}">${it.active ? "✓" : "○"} ${escapeHtml(it.name)}</span>`
+    )
+    .join("")}</div>`;
+}
+
 /**
  * @param {Record<string, any>} env
  * @param {import("./metrics.js").MetricsSnapshot} snapshot
@@ -107,6 +159,16 @@ export function renderOverviewPage(env, snapshot) {
   const lastMsg = snapshot.lastMessageAt
     ? new Date(snapshot.lastMessageAt).toLocaleString("es-MX")
     : "sin mensajes todavía";
+  const hasKv = !!(env?.SESSIONS && typeof env.SESSIONS.get === "function");
+
+  // Aproximación de "resueltas sin humano": % de mensajes de hoy que NO
+  // dispararon un handoff. No es "conversaciones únicas resueltas" (eso
+  // requeriría marcar el estado final de cada sesión) — se etiqueta como
+  // estimado en la propia tarjeta para no sobre-prometer precisión.
+  const resolvedWithoutHumanPct =
+    snapshot.messagesToday > 0
+      ? Math.max(0, Math.round((1 - snapshot.handoffsToday / snapshot.messagesToday) * 100))
+      : 100;
 
   const body = `
 <header class="topbar">
@@ -138,13 +200,28 @@ export function renderOverviewPage(env, snapshot) {
       <div class="value">$${snapshot.costUsdThisMonth.toFixed(2)}</div>
       <div class="sub">${provider}${budget ? ` · tope $${budget}/mes` : ""}</div>
     </div>
+    <div class="card">
+      <div class="label"><span>Handoffs hoy</span><span>05</span></div>
+      <div class="value">${snapshot.handoffsToday}</div>
+      <div class="sub">conversaciones escaladas a un humano</div>
+    </div>
+    <div class="card">
+      <div class="label"><span>Resueltas sin humano</span><span>06</span></div>
+      <div class="value">${resolvedWithoutHumanPct}%</div>
+      <div class="sub">estimado · mensajes de hoy sin handoff</div>
+    </div>
+  </div>
+
+  <div class="section card">
+    <div class="panel-title">Actividad · últimos 7 días</div>
+    ${renderActivityChart(snapshot.last7Days)}
   </div>
 
   <div class="section card">
     <div class="panel-title">Salud del bot</div>
     <div class="row">
       <span class="badge ok">✓ motor LLM (${escapeHtml(provider)}) conectado</span>
-      <span class="badge pending">Sesiones en memoria (KV pendiente de provisionar)</span>
+      <span class="badge ${hasKv ? "ok" : "pending"}">${hasKv ? "✓ sesiones y métricas en KV" : "Sesiones en memoria (KV pendiente de provisionar)"}</span>
       <span class="badge pending">Último mensaje: ${escapeHtml(lastMsg)}</span>
     </div>
   </div>
@@ -156,7 +233,7 @@ export function renderOverviewPage(env, snapshot) {
       <tr><th>Modelo activo</th><td>${escapeHtml(provider)}</td></tr>
       <tr><th>Tono de marca</th><td>${escapeHtml(env?.VOICE_TONE || "-")}</td></tr>
       <tr><th>Presupuesto mensual</th><td>${budget ? "$" + escapeHtml(budget) : "sin tope configurado"}</td></tr>
-      <tr><th>Superpoderes activos</th><td><span class="badge ok">Blindaje anti-invento (piso mínimo)</span></td></tr>
+      <tr><th>Superpoderes activos</th><td>${renderSuperpowersBadges(env)}</td></tr>
     </table>
   </div>
 
