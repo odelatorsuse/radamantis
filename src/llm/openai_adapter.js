@@ -5,7 +5,7 @@
 //
 // Requiere env.OPENAI_API_KEY (ver .env.example).
 
-import { LLMProviderError } from "./types.js";
+import { LLMProviderError, matchPricing } from "./types.js";
 
 const API_URL = "https://api.openai.com/v1/chat/completions";
 const DEFAULT_MODEL = "gpt-4o";
@@ -19,7 +19,9 @@ const PRICING_USD_PER_1M = {
 };
 
 function estimateCostUsd(model, inputTokens, outputTokens) {
-  const rate = PRICING_USD_PER_1M[model];
+  // OpenAI suele responder con la variante fechada (ej. "gpt-4o-2024-08-06")
+  // aunque se pida "gpt-4o" sin fecha — matchPricing tolera eso.
+  const rate = matchPricing(PRICING_USD_PER_1M, model);
   if (!rate) return 0; // modelo desconocido: no se puede tarifar, se reporta 0 explícitamente
   return (
     (inputTokens / 1_000_000) * rate.input +

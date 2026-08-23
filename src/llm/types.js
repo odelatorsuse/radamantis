@@ -61,4 +61,20 @@ export class LLMProviderError extends Error {
  * @property {(request: ChatRequest, env: Record<string, string>) => Promise<ChatResponse>} chat
  */
 
-export {};
+/**
+ * Busca la tarifa de un modelo en una tabla de precios, tolerando que el
+ * proveedor devuelva una variante fechada (ej. pedimos "gpt-4o" y la API
+ * responde "gpt-4o-2024-08-06"). Intenta match exacto primero; si no,
+ * busca la clave MÁS LARGA de la que `model` sea prefijo (para no
+ * confundir "gpt-4o" con "gpt-4o-mini").
+ * @param {Record<string, {input: number, output: number}>} table
+ * @param {string} model
+ */
+export function matchPricing(table, model) {
+  if (table[model]) return table[model];
+  const keys = Object.keys(table).sort((a, b) => b.length - a.length);
+  for (const key of keys) {
+    if (model.startsWith(key)) return table[key];
+  }
+  return null;
+}

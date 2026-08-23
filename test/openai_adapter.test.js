@@ -54,6 +54,25 @@ test("chat() parsea correctamente una respuesta exitosa de OpenAI", async () => 
   assert.equal(res.stopReason, "end_turn");
 });
 
+test("chat() calcula costUsd aunque OpenAI devuelva una variante fechada del modelo (ej. gpt-4o-2024-08-06)", async () => {
+  mockFetchOnce({
+    status: 200,
+    body: {
+      model: "gpt-4o-2024-08-06", // así respondió el deploy real, aunque pedimos "gpt-4o"
+      choices: [{ message: { content: "ok" }, finish_reason: "stop" }],
+      usage: { prompt_tokens: 157, completion_tokens: 48 },
+    },
+  });
+
+  const res = await chat(
+    { messages: [{ role: "user", content: "hola" }] },
+    { OPENAI_API_KEY: "sk-test-123" }
+  );
+
+  assert.equal(res.model, "gpt-4o-2024-08-06");
+  assert.ok(res.usage.costUsd > 0, "costUsd no debería quedar en 0 por una variante fechada del modelo");
+});
+
 test("chat() marca como retryable un error 429/5xx de OpenAI", async () => {
   mockFetchOnce({ status: 500, body: { error: { message: "server error" } } });
   await assert.rejects(

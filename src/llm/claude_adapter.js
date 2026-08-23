@@ -4,7 +4,7 @@
 //
 // Requiere env.ANTHROPIC_API_KEY (ver .env.example).
 
-import { LLMProviderError } from "./types.js";
+import { LLMProviderError, matchPricing } from "./types.js";
 
 const API_URL = "https://api.anthropic.com/v1/messages";
 const ANTHROPIC_VERSION = "2023-06-01";
@@ -20,7 +20,7 @@ const PRICING_USD_PER_1M = {
 };
 
 function estimateCostUsd(model, inputTokens, outputTokens) {
-  const rate = PRICING_USD_PER_1M[model];
+  const rate = matchPricing(PRICING_USD_PER_1M, model);
   if (!rate) return 0; // modelo desconocido: no se puede tarifar, se reporta 0 explícitamente
   return (
     (inputTokens / 1_000_000) * rate.input +
