@@ -1,0 +1,16 @@
+{
+  "name": "radamantis",
+  "version": "0.1.0",
+  "description": "Radamantis - Suite Forja+ chatbot omnicanal con motor LLM multi-modelo",
+  "type": "module",
+  "main": "src/core/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "node --test test/",
+    "lint": "eslint src/"
+  },
+  "engines": { "node": ">=18" },
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -1,0 +1,16 @@
+name = "radamantis"
+main = "src/core/index.js"
+compatibility_date = "2026-08-01"
+
+[vars]
+ENVIRONMENT = "development"
+
+# KV / D1 / R2 / Queues bindings se agregan conforme se integre cada superpoder
+# [[kv_namespaces]]
+# binding = "SESSIONS"
+# id = ""
+
+# [[d1_databases]]
+# binding = "DB"
+# database_name = "radamantis-db"
+# database_id = ""
