@@ -39,6 +39,12 @@ function formatHistory(session, maxMessages = 6) {
  * @param {Record<string, any>} env
  */
 export async function escalate({ session, messageText }, env) {
+  // Se marca la sesión como "pidió humano" pase lo que pase con el envío de
+  // la alerta — los sweeps de cazador/reactivación (superpoderes #3 y #10)
+  // usan esta bandera para no seguir mandando follow-ups automáticos a
+  // alguien que ya está esperando a una persona.
+  session.state = { ...session.state, handoffRequestedAt: Date.now() };
+
   const adminNumber = env?.ADMIN_WHATSAPP_NUMBER;
   if (!adminNumber) {
     console.warn("[handoff] se pidió un humano pero ADMIN_WHATSAPP_NUMBER no está configurado — no se pudo escalar.");

@@ -66,11 +66,20 @@ function renderKvBlock(biz) {
   ];
 }
 
+// Deben coincidir EXACTO con CRON_HOURLY_SWEEPS / CRON_DAILY_REPORT en
+// src/core/index.js — así el `scheduled()` handler puede distinguir qué
+// disparo es cuál a partir de controller.cron.
+const CRON_HOURLY_SWEEPS = "0 * * * *"; // cazador (#3) + reactivación (#10)
+const CRON_DAILY_REPORT = "0 14 * * *"; // reporte diario (#7) — ~8am CDMX (UTC-6)
+
 function renderEnvBlock(biz) {
   const workerName = `radamantis-${biz.slug}`;
   const lines = [
     `[env.${biz.slug}]`,
     `name = "${tomlEscape(workerName)}"`,
+    ``,
+    `[env.${biz.slug}.triggers]`,
+    `crons = ["${CRON_HOURLY_SWEEPS}", "${CRON_DAILY_REPORT}"]`,
     ``,
     `[env.${biz.slug}.vars]`,
     `ENVIRONMENT = "production"`, // los [env.X].vars NO heredan el [vars] de arriba (gotcha de wrangler)
@@ -84,11 +93,15 @@ function renderEnvBlock(biz) {
     `ADMIN_WHATSAPP_NUMBER = "${tomlEscape(biz.adminWhatsappNumber || "")}"`,
     `WHATSAPP_PHONE_NUMBER_ID = "${tomlEscape(biz.whatsapp?.phoneNumberId || "")}"`,
     `WHATSAPP_WEBHOOK_VERIFY_TOKEN = "${tomlEscape(biz.whatsapp?.webhookVerifyToken || "")}"`,
+    `REVIEW_URL = "${tomlEscape(biz.reviewUrl || "")}"`, // superpoder reseñas
+    `DEFAULT_SERVICE_PRICE_USD = "${tomlEscape(biz.defaultServicePriceUsd ?? "")}"`, // superpoder cobros
     ``,
     ...renderKvBlock(biz),
     ``,
     `# Secrets (NO van en este archivo, cargar con wrangler secret put --env ${biz.slug}):`,
     `#   WHATSAPP_ACCESS_TOKEN, WHATSAPP_APP_SECRET, ANTHROPIC_API_KEY / OPENAI_API_KEY (según LLM_DEFAULT_PROVIDER)`,
+    `#   ADMIN_PANEL_USER, ADMIN_PANEL_PASSWORD (protegen /admin/overview y /conexiones)`,
+    `#   STRIPE_SECRET_KEY (opcional, activa el superpoder de cobros)`,
   ];
   return lines.join("\n");
 }

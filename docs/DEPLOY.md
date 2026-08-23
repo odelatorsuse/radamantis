@@ -143,9 +143,89 @@ Repetir (namespace + id + redeploy) por cada negocio. Ni `session.js` ni
 `metrics.js` necesitan cambios de código — detectan el binding `SESSIONS`
 automáticamente y lo usan en cuanto existe.
 
-## 8. Integraciones de canal (WhatsApp, Telegram, etc.)
+## 8. WhatsApp real (webhook + envío)
 
-Los adaptadores de canal (`src/integrations/*`) siguen siendo stubs — el
-bot ya responde vía `/chat` (prueba manual) pero todavía no vía WhatsApp
-real. Ese es el siguiente bloque de trabajo natural una vez que confirmes
-que el deploy de arriba funcionó de punta a punta.
+WhatsApp Business Cloud API ya está implementado (`src/integrations/whatsapp`).
+Necesitas, desde Meta for Developers (developers.facebook.com → tu app →
+WhatsApp → API Setup):
+
+```bash
+npx wrangler secret put WHATSAPP_ACCESS_TOKEN --env ch-veterinarios     # token temporal o permanente de la app
+npx wrangler secret put WHATSAPP_APP_SECRET --env ch-veterinarios      # "App Secret" de Meta — habilita verificación de firma del webhook
+```
+
+Y en `businesses/ch-veterinarios.json`, campo `whatsapp.phoneNumberId`
+(el "Phone number ID" que muestra Meta, NO el número de teléfono en sí) y
+`whatsapp.webhookVerifyToken` (cualquier string secreto que tú inventes —
+Meta te lo va a pedir de vuelta en el siguiente paso). Después:
+
+```bash
+node scripts/gen-wrangler-envs.mjs
+npx wrangler deploy --env ch-veterinarios
+```
+
+En el dashboard de Meta, configura el webhook apuntando a:
+```
+https://radamantis-ch-veterinarios.<tu-subdominio>.workers.dev/webhook/whatsapp
+```
+con el mismo `webhookVerifyToken` que pusiste en el JSON. Meta hace un GET
+de verificación (`hub.challenge`) antes de aceptar la URL — ya está
+implementado (`verifyWebhookChallenge`), debería pasar solo.
+
+**Importante — el `/conexiones` de tu bot no miente**: WhatsApp aparece
+"código listo · falta configurar" hasta que `WHATSAPP_PHONE_NUMBER_ID` Y
+`WHATSAPP_ACCESS_TOKEN` estén realmente configurados; solo entonces cambia
+a "✓ conectado". Si ves "conectado" sin haber hecho esto, es un bug —
+avísame.
+
+## 9. Seguridad — proteger las consolas admin
+
+`/admin/overview`, `/conexiones` (por negocio) y el panel "Mis bots"
+(`admin-dashboard`) NO tienen contraseña hasta que configures esto — hazlo
+antes de operar en serio, quedan expuestos en texto plano a quien tenga la
+URL:
+
+```bash
+npx wrangler secret put ADMIN_PANEL_USER --env ch-veterinarios
+npx wrangler secret put ADMIN_PANEL_PASSWORD --env ch-veterinarios
+npx wrangler deploy --env ch-veterinarios
+
+cd admin-dashboard
+npx wrangler secret put ADMIN_PANEL_USER
+npx wrangler secret put ADMIN_PANEL_PASSWORD
+npx wrangler deploy
+cd ..
+```
+
+Repetir los dos primeros por cada negocio (usa las mismas credenciales o
+distintas, como prefieras — son independientes por Worker).
+
+## 10. Superpoderes — qué necesita configuración adicional
+
+La mayoría de los 12 superpoderes ya están implementados y corren solos
+(blindaje, voz de marca, vigilante, handoff, multi-idioma, encuestas). Estos
+necesitan un paso extra:
+
+| Superpoder | Requiere |
+|---|---|
+| Vigilante, Handoff, Reporte diario, Cazador, Reactivación | `adminWhatsappNumber` en `businesses/<slug>.json` → regenerar → redeploy (te avisan por WhatsApp) |
+| Oído y vista (transcribe audio, describe imágenes) | `OPENAI_API_KEY` como secret — **incluso si tu bot usa Claude como proveedor principal**, esto usa Whisper/GPT-4o-mini de OpenAI específicamente |
+| Reseñas | `reviewUrl` en `businesses/<slug>.json` (link de Google/Trustpilot) → regenerar → redeploy |
+| Cobros (Stripe) | `STRIPE_SECRET_KEY` como secret + `defaultServicePriceUsd` en `businesses/<slug>.json` → regenerar → redeploy |
+
+```bash
+npx wrangler secret put OPENAI_API_KEY --env ch-veterinarios     # si no lo pusiste ya para el LLM
+npx wrangler secret put STRIPE_SECRET_KEY --env ch-veterinarios  # opcional, solo si activas cobros
+```
+
+Cazador de ventas (#3) y reactivación de leads fríos (#10) corren desde un
+cron trigger cada hora (`0 * * * *`, ya declarado en `wrangler.toml` por el
+generador) — necesitan persistencia KV real (paso 7) para poder listar
+sesiones; sin KV, el sweep corre pero no encuentra nada que procesar. El
+reporte diario (#7) corre una vez al día (`0 14 * * *`, ~8am CDMX/UTC-6 —
+ajusta el cron en `scripts/gen-wrangler-envs.mjs` si tu negocio está en otra
+zona horaria).
+
+Cron Triggers están disponibles en el plan gratuito de Workers; si tu cuenta
+nunca los usó, Cloudflare puede pedirte confirmar el primer deploy con
+triggers desde el dashboard.

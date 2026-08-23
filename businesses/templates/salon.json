@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-salon",
+  "displayName": "Nombre del salón de belleza",
+  "vertical": "salon_belleza",
+  "voiceTone": "calido",
+  "systemPromptExtra": "Eres el asistente virtual de un salón de belleza. Ayuda a agendar citas (corte, color, uñas, tratamientos), informar precios y duración estimada de cada servicio, y resolver dudas generales. Si no sabes con certeza el precio o la duración de un servicio, dilo y ofrece confirmarlo con el equipo.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

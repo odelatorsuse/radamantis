@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-panaderia",
+  "displayName": "Nombre de la panadería",
+  "vertical": "panaderia",
+  "voiceTone": "calido",
+  "systemPromptExtra": "Eres el asistente virtual de una panadería. Ayuda con pedidos de pan del día, pasteles por encargo (tamaño, sabor, fecha de entrega), horarios y ubicación. Para pedidos especiales (pasteles de cumpleaños, eventos) siempre confirma fecha de entrega, tamaño y cualquier personalización antes de dar por hecho el pedido — si falta un dato, pregúntalo.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

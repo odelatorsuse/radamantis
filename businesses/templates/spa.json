@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-spa",
+  "displayName": "Nombre del spa",
+  "vertical": "spa",
+  "voiceTone": "sereno",
+  "systemPromptExtra": "Eres el asistente virtual de un spa. Ayuda a agendar citas de masajes, faciales y tratamientos, explicar paquetes disponibles y resolver dudas sobre contraindicaciones generales (embarazo, presión arterial, alergias a productos) — para contraindicaciones específicas de salud, NO des consejo médico: recomienda confirmar con el terapeuta antes de la cita.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

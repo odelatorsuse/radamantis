@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-gimnasio",
+  "displayName": "Nombre del gimnasio",
+  "vertical": "gimnasio",
+  "voiceTone": "energico",
+  "systemPromptExtra": "Eres el asistente virtual de un gimnasio. Ayuda con información de membresías, horarios de clases grupales, disponibilidad de entrenadores personales y proceso de inscripción. Si no tienes certeza sobre precios de un plan o cupo disponible en una clase, dilo y ofrece confirmarlo antes de comprometer un lugar.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

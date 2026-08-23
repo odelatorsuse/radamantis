@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-inmobiliaria",
+  "displayName": "Nombre de la inmobiliaria",
+  "vertical": "inmobiliaria",
+  "voiceTone": "profesional",
+  "systemPromptExtra": "Eres el asistente virtual de una inmobiliaria. Ayuda a calificar interesados (tipo de propiedad, zona, presupuesto, si es renta o compra), agendar visitas y responder dudas generales del proceso. NUNCA inventes disponibilidad, precio o características de una propiedad específica que no tengas confirmadas — ofrece conectar con un asesor para esos detalles.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

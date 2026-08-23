@@ -7,6 +7,7 @@
 // para que un problema en un bot de negocio no tumbe el panel general.
 
 import { businesses } from "./businesses.generated.js";
+import { requireBasicAuth } from "../src/core/auth.js";
 
 function escapeHtml(str) {
   return String(str ?? "").replace(/[&<>"']/g, (c) => ({
@@ -20,8 +21,8 @@ function escapeHtml(str) {
 
 const STYLES = `
   :root {
-    --bg: #0b0b0d; --panel: #141416; --border: #2a2a2e; --text: #f2f0ea;
-    --muted: #9a968c; --accent: #ff7a1a; --ok: #35c97b; --err: #ff5c5c;
+    --bg: #0a0e14; --panel: #10151d; --border: #232b38; --text: #eef1f6;
+    --muted: #8892a4; --accent: #7c5cff; --ok: #2ee6a6; --err: #ff5470;
   }
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--text); font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
@@ -38,30 +39,41 @@ const STYLES = `
   .card .vertical { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 14px; }
   .badge { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; border-radius: 999px; padding: 5px 11px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); }
   .badge .dot { width: 7px; height: 7px; border-radius: 50%; }
-  .badge.online { color: var(--ok); border-color: rgba(53,201,123,.4); background: rgba(53,201,123,.08); }
+  .badge.online { color: var(--ok); border-color: rgba(46,230,166,.4); background: rgba(46,230,166,.08); }
   .badge.online .dot { background: var(--ok); }
-  .badge.offline { color: var(--err); border-color: rgba(255,92,92,.4); background: rgba(255,92,92,.08); }
+  .badge.offline { color: var(--err); border-color: rgba(255,84,112,.4); background: rgba(255,84,112,.08); }
   .badge.offline .dot { background: var(--err); }
   .card a { display: block; margin-top: 14px; color: var(--accent); text-decoration: none; font-size: 13px; font-weight: 600; }
   .empty { border: 1px dashed var(--border); border-radius: 10px; padding: 40px; text-align: center; color: var(--muted); }
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px; }
 `;
 
-async function checkHealth(healthUrl) {
+// Un solo intento fallido (cold start del bot, timeout de red puntual) no
+// debería pintar un negocio entero como "SIN RESPUESTA" — se reintenta una
+// vez antes de darlo por caído.
+async function checkHealthOnce(healthUrl, timeoutMs) {
   try {
-    const res = await fetch(healthUrl, { signal: AbortSignal.timeout(4000) });
+    const res = await fetch(healthUrl, { signal: AbortSignal.timeout(timeoutMs) });
     return res.ok;
   } catch {
     return false;
   }
 }
 
+async function checkHealth(healthUrl) {
+  if (await checkHealthOnce(healthUrl, 5000)) return true;
+  return checkHealthOnce(healthUrl, 6000);
+}
+
 export default {
-  async fetch(request) {
+  async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname !== "/" && url.pathname !== "/dashboard") {
       return new Response("Not found", { status: 404 });
     }
+
+    const authFailure = requireBasicAuth(request, env, "Radamantis - Mis bots");
+    if (authFailure) return authFailure;
 
     const statuses = await Promise.all(
       businesses.map(async (biz) => ({ ...biz, online: await checkHealth(biz.healthUrl) }))

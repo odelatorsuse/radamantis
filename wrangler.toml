@@ -31,6 +31,9 @@ ENVIRONMENT = "development"
 [env.ch-veterinarios]
 name = "radamantis-ch-veterinarios"
 
+[env.ch-veterinarios.triggers]
+crons = ["0 * * * *", "0 14 * * *"]
+
 [env.ch-veterinarios.vars]
 ENVIRONMENT = "production"
 BUSINESS_SLUG = "ch-veterinarios"
@@ -43,6 +46,8 @@ LLM_MONTHLY_BUDGET_USD = "20"
 ADMIN_WHATSAPP_NUMBER = ""
 WHATSAPP_PHONE_NUMBER_ID = ""
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = "radamantis-ch-veterinarios-verify"
+REVIEW_URL = ""
+DEFAULT_SERVICE_PRICE_USD = ""
 
 # KV del negocio (sesiones + métricas). Sin provisionar todavía:
 #   1) npx wrangler kv namespace create SESSIONS --env ch-veterinarios
@@ -54,4 +59,6 @@ WHATSAPP_WEBHOOK_VERIFY_TOKEN = "radamantis-ch-veterinarios-verify"
 
 # Secrets (NO van en este archivo, cargar con wrangler secret put --env ch-veterinarios):
 #   WHATSAPP_ACCESS_TOKEN, WHATSAPP_APP_SECRET, ANTHROPIC_API_KEY / OPENAI_API_KEY (según LLM_DEFAULT_PROVIDER)
+#   ADMIN_PANEL_USER, ADMIN_PANEL_PASSWORD (protegen /admin/overview y /conexiones)
+#   STRIPE_SECRET_KEY (opcional, activa el superpoder de cobros)
 # END GENERATED ENVS

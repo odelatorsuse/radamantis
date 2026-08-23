@@ -1,10 +1,10 @@
 {
-  "slug": "ch-veterinarios",
-  "displayName": "CH Veterinarios",
-  "vertical": "clinica",
+  "slug": "mi-negocio-veterinaria",
+  "displayName": "Nombre de la clínica veterinaria",
+  "vertical": "veterinaria",
   "voiceTone": "calido",
   "systemPromptExtra": "Eres el asistente de una clínica veterinaria. Ayuda a agendar citas, resolver dudas generales sobre servicios y precios (si no los sabes con certeza, ofrece confirmarlos), y detecta urgencias (mascota herida, intoxicada, en labor de parto complicada) para escalar a un humano de inmediato.",
-  "llmDefaultProvider": "openai",
+  "llmDefaultProvider": "claude",
   "monthlyBudgetUsd": 20,
   "adminWhatsappNumber": "",
   "kvSessionsId": "",
@@ -12,7 +12,7 @@
   "defaultServicePriceUsd": null,
   "whatsapp": {
     "phoneNumberId": "",
-    "webhookVerifyToken": "radamantis-ch-veterinarios-verify"
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
   },
   "channels": {
     "whatsapp": true,

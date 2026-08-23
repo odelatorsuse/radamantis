@@ -9,6 +9,12 @@ compatibility_flags = ["nodejs_compat"]
 #
 # Deploy: desde esta carpeta -> npx wrangler deploy
 # (usa las mismas CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID que los bots).
+#
+# Seguridad: este panel lista TODOS los negocios y sus métricas — protégelo
+# con Basic Auth antes de operar en serio:
+#   npx wrangler secret put ADMIN_PANEL_USER
+#   npx wrangler secret put ADMIN_PANEL_PASSWORD
+# Sin esos dos secrets el panel queda abierto (se loguea advertencia).
 
 [vars]
 ENVIRONMENT = "production"

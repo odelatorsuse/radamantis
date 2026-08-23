@@ -18,6 +18,17 @@ import { handleWebhook, handleWebhookVerification, ChannelNotImplementedError, b
 import { handleIncomingMessage } from "./orchestrator.js";
 import { createMetricsStore } from "./metrics.js";
 import { renderOverviewPage, renderConexionesPage } from "./adminUI.js";
+import { requireBasicAuth } from "./auth.js";
+import { sweepHotLeads } from "../superpowers/cazador/index.js";
+import { sweepColdLeads } from "../superpowers/reactivacion/index.js";
+import { sendDailyReport } from "../superpowers/reporte/index.js";
+
+// Deben coincidir EXACTO con los crons declarados en
+// scripts/gen-wrangler-envs.mjs ([env.<slug>.triggers] crons = [...]) — es
+// cómo `scheduled()` distingue qué disparo es cuál (controller.cron trae el
+// string tal cual está configurado en wrangler.toml).
+const CRON_HOURLY_SWEEPS = "0 * * * *"; // cazador (#3) + reactivación (#10)
+const CRON_DAILY_REPORT = "0 14 * * *"; // reporte diario (#7) — ~8am CDMX (UTC-6, sin horario de verano)
 
 function json(data, init = {}) {
   return new Response(JSON.stringify(data), {
@@ -52,12 +63,16 @@ export default {
     }
 
     if (request.method === "GET" && url.pathname === "/admin/overview") {
+      const authFailure = requireBasicAuth(request, env);
+      if (authFailure) return authFailure;
       const metrics = createMetricsStore(env);
       const snapshot = await metrics.snapshot();
       return html(renderOverviewPage(env, snapshot));
     }
 
     if (request.method === "GET" && url.pathname === "/conexiones") {
+      const authFailure = requireBasicAuth(request, env);
+      if (authFailure) return authFailure;
       return html(renderConexionesPage(env));
     }
 
@@ -121,15 +136,33 @@ export default {
   },
 
   /**
-   * Cron trigger (reporte diario, cazador de ventas, reactivación de leads).
-   * TODO(reporte): implementar generación y envío del resumen matutino.
-   * TODO(cazador): implementar barrido de conversaciones enfriadas 3-20h.
+   * Cron trigger — dos horarios distintos comparten este mismo handler
+   * (ver CRON_HOURLY_SWEEPS / CRON_DAILY_REPORT arriba):
+   *   - cada hora: cazador de ventas (#3) + reactivación de leads (#10)
+   *   - una vez al día: reporte diario (#7)
    * @param {ScheduledController} controller
    * @param {Record<string, any>} env
    * @param {ExecutionContext} ctx
    */
   async scheduled(controller, env, ctx) {
     console.log(`[radamantis] cron disparado: ${controller.cron} @ ${new Date().toISOString()}`);
-    // Sin implementación aún — ver docs/CHECKLIST.md.
+    try {
+      if (controller.cron === CRON_DAILY_REPORT) {
+        const metrics = createMetricsStore(env);
+        const snapshot = await metrics.snapshot();
+        await sendDailyReport(snapshot, env);
+        console.log("[radamantis] reporte diario enviado.");
+        return;
+      }
+
+      // Por defecto (incluye CRON_HOURLY_SWEEPS y cualquier cron no
+      // reconocido, para no dejar un trigger mal configurado sin hacer nada):
+      const [hot, cold] = await Promise.all([sweepHotLeads(env), sweepColdLeads(env)]);
+      console.log(
+        `[radamantis] cazador: ${hot.followedUp}/${hot.checked} follow-ups enviados. reactivación: ${cold.reactivated}/${cold.checked} leads reactivados.`
+      );
+    } catch (err) {
+      console.error("[radamantis] error en scheduled():", err);
+    }
   },
 };

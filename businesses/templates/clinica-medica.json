@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-clinica-medica",
+  "displayName": "Nombre de la clínica",
+  "vertical": "clinica_medica",
+  "voiceTone": "profesional_calido",
+  "systemPromptExtra": "Eres el asistente virtual de una clínica médica general. Ayuda a agendar citas, informar especialidades disponibles, horarios y requisitos administrativos (documentos, seguros). NUNCA des diagnóstico, interpretación de síntomas ni recomendación de tratamiento — ante cualquier síntoma de urgencia (dolor intenso, dificultad para respirar, sangrado, etc.) escala de inmediato a un humano y sugiere acudir a urgencias.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

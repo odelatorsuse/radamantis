@@ -30,6 +30,8 @@ function monthKey() {
  * @property {number} handoffsToday
  * @property {string} lastMessageAt  - ISO string o "" si nunca hubo mensajes.
  * @property {DayActivity[]} last7Days - más antiguo primero, hoy al final.
+ * @property {number|null} csatAverage - promedio histórico de encuestas CSAT (1-5), null si no hay respuestas.
+ * @property {number} csatCount - cuántas respuestas de encuesta se han recibido en total.
  */
 
 class InMemoryMetricsStore {
@@ -40,6 +42,8 @@ class InMemoryMetricsStore {
     this._appointmentsByDay = new Map();
     this._handoffsByDay = new Map();
     this._lastMessageAt = "";
+    this._csatSum = 0;
+    this._csatCount = 0;
   }
 
   async recordMessage({ externalUserId, costUsd }) {
@@ -62,6 +66,11 @@ class InMemoryMetricsStore {
     this._handoffsByDay.set(day, (this._handoffsByDay.get(day) || 0) + 1);
   }
 
+  async recordCsat(rating) {
+    this._csatSum += rating;
+    this._csatCount += 1;
+  }
+
   /** @returns {Promise<MetricsSnapshot>} */
   async snapshot() {
     const day = todayKey();
@@ -79,6 +88,8 @@ class InMemoryMetricsStore {
       handoffsToday: this._handoffsByDay.get(day) || 0,
       lastMessageAt: this._lastMessageAt,
       last7Days,
+      csatAverage: this._csatCount > 0 ? this._csatSum / this._csatCount : null,
+      csatCount: this._csatCount,
     };
   }
 }
@@ -127,6 +138,13 @@ class KVMetricsStore {
     await this._incr(`metrics:handoffs:${day}`, 1, 30 * 24 * 60 * 60);
   }
 
+  async recordCsat(rating) {
+    // Sin TTL — es un histórico acumulado pequeño (una entrada por
+    // conversación con encuesta respondida), no un contador diario.
+    await this._incr(`metrics:csat:sum`, rating);
+    await this._incr(`metrics:csat:count`, 1);
+  }
+
   async _countUniqueUsers(day) {
     let cursor;
     let count = 0;
@@ -143,7 +161,7 @@ class KVMetricsStore {
     const day = todayKey();
     const month = monthKey();
 
-    const [messagesTodayRaw, costRaw, appointmentsRaw, handoffsRaw, lastMessageAt, uniqueUsersToday] =
+    const [messagesTodayRaw, costRaw, appointmentsRaw, handoffsRaw, lastMessageAt, uniqueUsersToday, csatSumRaw, csatCountRaw] =
       await Promise.all([
         this._kv.get(`metrics:messages:${day}`),
         this._kv.get(`metrics:cost:${month}`),
@@ -151,7 +169,11 @@ class KVMetricsStore {
         this._kv.get(`metrics:handoffs:${day}`),
         this._kv.get("metrics:lastMessageAt"),
         this._countUniqueUsers(day),
+        this._kv.get("metrics:csat:sum"),
+        this._kv.get("metrics:csat:count"),
       ]);
+    const csatCount = csatCountRaw ? parseInt(csatCountRaw, 10) : 0;
+    const csatSum = csatSumRaw ? parseFloat(csatSumRaw) : 0;
 
     const last7Days = [];
     for (let i = 6; i >= 0; i--) {
@@ -168,6 +190,8 @@ class KVMetricsStore {
       handoffsToday: handoffsRaw ? parseInt(handoffsRaw, 10) : 0,
       lastMessageAt: lastMessageAt || "",
       last7Days,
+      csatAverage: csatCount > 0 ? csatSum / csatCount : null,
+      csatCount,
     };
   }
 }

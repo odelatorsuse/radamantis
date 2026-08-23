@@ -16,14 +16,15 @@ function escapeHtml(str) {
 
 const BASE_STYLES = `
   :root {
-    --bg: #0b0b0d;
-    --panel: #141416;
-    --border: #2a2a2e;
-    --text: #f2f0ea;
-    --muted: #9a968c;
-    --accent: #ff7a1a;
-    --accent2: #4da3ff;
-    --ok: #35c97b;
+    --bg: #0a0e14;
+    --panel: #10151d;
+    --border: #232b38;
+    --text: #eef1f6;
+    --muted: #8892a4;
+    --accent: #7c5cff;
+    --accent2: #22d3c9;
+    --ok: #2ee6a6;
+    --err: #ff5470;
   }
   * { box-sizing: border-box; }
   body {
@@ -62,12 +63,12 @@ const BASE_STYLES = `
     font-size: 11px; letter-spacing: .05em; text-transform: uppercase; border-radius: 6px;
     padding: 4px 9px; border: 1px solid var(--border);
   }
-  .badge.ok { color: var(--ok); border-color: rgba(53,201,123,.4); background: rgba(53,201,123,.08); }
+  .badge.ok { color: var(--ok); border-color: rgba(46,230,166,.4); background: rgba(46,230,166,.08); }
   .badge.pending { color: var(--muted); }
-  .badge.soon { color: var(--accent2); border-color: rgba(77,163,255,.4); background: rgba(77,163,255,.08); }
+  .badge.soon { color: var(--accent2); border-color: rgba(34,211,201,.4); background: rgba(34,211,201,.08); }
   .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 24px; }
   a.btn {
-    display: inline-block; background: var(--accent); color: #1a0f00; font-weight: 700;
+    display: inline-block; background: var(--accent); color: #ffffff; font-weight: 700;
     padding: 12px 18px; border-radius: 8px; text-decoration: none; font-size: 14px;
   }
   .section { margin-top: 28px; }
@@ -81,7 +82,7 @@ const BASE_STYLES = `
   footer { text-align: center; color: var(--muted); font-size: 12px; padding: 24px; }
   .chart { display: flex; align-items: flex-end; gap: 10px; height: 140px; padding-top: 10px; }
   .chart .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 6px; }
-  .chart .bar { width: 100%; max-width: 34px; background: linear-gradient(180deg, var(--accent), #b85200); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .chart .bar { width: 100%; max-width: 34px; background: linear-gradient(180deg, var(--accent), var(--accent2)); border-radius: 4px 4px 0 0; min-height: 2px; }
   .chart .bar-count { font-size: 11px; color: var(--muted); }
   .chart .bar-day { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
   .badges-cell { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -131,14 +132,26 @@ function renderActivityChart(days) {
 
 // Superpoderes cuyo estado se puede derivar de código/config real (sin
 // inventar "activo" para lo que sigue en STUB). Ver docs/CHECKLIST.md.
+// Los 12 superpoderes — mismo criterio honesto que /conexiones: "activo"
+// significa que el código corre Y está configurado para hacer algo real
+// (no solo que el archivo existe). Ver docs/CHECKLIST.md para el detalle de
+// qué hace cada uno y qué le falta para pasar de MVP a versión completa.
 function renderSuperpowersBadges(env) {
   const hasKv = !!(env?.SESSIONS && typeof env.SESSIONS.get === "function");
+  const hasAdminNumber = !!env?.ADMIN_WHATSAPP_NUMBER;
   const items = [
-    { name: "Blindaje anti-invento (piso mínimo)", active: true },
-    { name: "Voz de marca (piso mínimo)", active: !!env?.SYSTEM_PROMPT_EXTRA },
-    { name: "Vigilante (riesgo/frustración)", active: !!env?.ADMIN_WHATSAPP_NUMBER },
-    { name: "Handoff a humano", active: !!env?.ADMIN_WHATSAPP_NUMBER },
-    { name: "Persistencia real (KV)", active: hasKv },
+    { name: "#1 Blindaje anti-invento (piso mínimo)", active: true },
+    { name: "#2 Vigilante (riesgo/frustración)", active: hasAdminNumber },
+    { name: "#3 Cazador de ventas (follow-up 3-20h)", active: hasAdminNumber && hasKv },
+    { name: "#4 Handoff a humano", active: hasAdminNumber },
+    { name: "#5 Oído y vista (audio/imagen)", active: !!(env?.WHATSAPP_ACCESS_TOKEN && env?.OPENAI_API_KEY) },
+    { name: "#6 Voz de marca (piso mínimo)", active: !!env?.SYSTEM_PROMPT_EXTRA },
+    { name: "#7 Reporte diario", active: hasAdminNumber },
+    { name: "#8 Multi-idioma (es/en/pt)", active: true },
+    { name: "#9 Encuestas CSAT", active: true },
+    { name: "#10 Reactivación de leads fríos", active: hasAdminNumber && hasKv },
+    { name: "#11 Reseñas", active: !!env?.REVIEW_URL },
+    { name: "#12 Cobros (Stripe)", active: !!(env?.STRIPE_SECRET_KEY && env?.DEFAULT_SERVICE_PRICE_USD) },
   ];
   return `<div class="badges-cell">${items
     .map(
@@ -210,6 +223,11 @@ export function renderOverviewPage(env, snapshot) {
       <div class="value">${resolvedWithoutHumanPct}%</div>
       <div class="sub">estimado · mensajes de hoy sin handoff</div>
     </div>
+    <div class="card">
+      <div class="label"><span>Satisfacción (CSAT)</span><span>07</span></div>
+      <div class="value">${snapshot.csatAverage != null ? snapshot.csatAverage.toFixed(1) : "—"}</div>
+      <div class="sub">${snapshot.csatCount} encuesta(s) respondida(s)</div>
+    </div>
   </div>
 
   <div class="section card">
@@ -246,22 +264,34 @@ export function renderOverviewPage(env, snapshot) {
   return page("Resumen", businessName, body);
 }
 
-// Marketplace de integraciones. Refleja el estado REAL del checklist — nada
-// se muestra como "conectado" salvo que exista código funcionando.
+// Marketplace de integraciones. Refleja el estado REAL — nada se muestra
+// como "conectado" salvo que exista código Y esté configurado con las
+// credenciales que necesita para funcionar de verdad. Cuatro estados:
+//   ok      -> código implementado Y configurado (funciona ahora)
+//   ready   -> código implementado pero SIN configurar (código listo, faltan
+//              secrets/env vars — este es el estado que antes se mostraba
+//              incorrectamente como "conectado")
+//   pending -> sin implementar todavía
+//   soon    -> roadmap, ni siquiera empezado
 const CONNECTOR_CATEGORIES = [
   {
     title: "Canales de mensajería",
     items: [
-      { name: "WhatsApp Business API", path: "src/integrations/whatsapp", status: "ok" },
-      { name: "Telegram Bot API", path: "src/integrations/telegram", status: "pending" },
-      { name: "Instagram Messaging", path: "src/integrations/instagram", status: "pending" },
-      { name: "Facebook Messenger", path: "src/integrations/facebook", status: "pending" },
+      {
+        name: "WhatsApp Business API",
+        path: "src/integrations/whatsapp",
+        codeReady: true,
+        configured: (env) => !!(env?.WHATSAPP_PHONE_NUMBER_ID && env?.WHATSAPP_ACCESS_TOKEN),
+      },
+      { name: "Telegram Bot API", path: "src/integrations/telegram", codeReady: false },
+      { name: "Instagram Messaging", path: "src/integrations/instagram", codeReady: false },
+      { name: "Facebook Messenger", path: "src/integrations/facebook", codeReady: false },
     ],
   },
   {
     title: "Que agende tus citas",
     items: [
-      { name: "Google Calendar", path: "src/integrations/google_calendar", status: "pending" },
+      { name: "Google Calendar", path: "src/integrations/google_calendar", codeReady: false },
       { name: "Cal.com", status: "soon" },
       { name: "Calendly", status: "soon" },
       { name: "Outlook Calendar", status: "soon" },
@@ -269,7 +299,14 @@ const CONNECTOR_CATEGORIES = [
   },
   {
     title: "Cobros",
-    items: [{ name: "Stripe MX", path: "src/integrations/stripe_mx", status: "pending" }],
+    items: [
+      {
+        name: "Stripe (links de pago por WhatsApp)",
+        path: "src/superpowers/cobros",
+        codeReady: true,
+        configured: (env) => !!env?.STRIPE_SECRET_KEY,
+      },
+    ],
   },
   {
     title: "CRM (roadmap)",
@@ -282,8 +319,16 @@ const CONNECTOR_CATEGORIES = [
   },
 ];
 
+function computeStatus(item, env) {
+  if (item.status === "soon") return "soon";
+  if (!item.codeReady) return "pending";
+  if (item.configured && !item.configured(env)) return "ready";
+  return "ok";
+}
+
 function statusBadge(status) {
   if (status === "ok") return `<span class="badge ok">✓ conectado</span>`;
+  if (status === "ready") return `<span class="badge soon">código listo · falta configurar</span>`;
   if (status === "soon") return `<span class="badge soon">roadmap</span>`;
   return `<span class="badge pending">pendiente</span>`;
 }
@@ -300,7 +345,7 @@ export function renderConexionesPage(env) {
           (item) => `
         <div class="conn-card">
           <div class="name">${escapeHtml(item.name)}</div>
-          ${statusBadge(item.status)}
+          ${statusBadge(computeStatus(item, env))}
         </div>`
         )
         .join("")}

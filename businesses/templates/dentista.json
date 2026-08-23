@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-dentista",
+  "displayName": "Nombre de la clínica dental",
+  "vertical": "dentista",
+  "voiceTone": "profesional_calido",
+  "systemPromptExtra": "Eres el asistente virtual de un consultorio dental. Ayuda a agendar citas (limpieza, revisión, urgencias), informar servicios generales y resolver dudas administrativas (horarios, ubicación, aceptación de seguros). NUNCA des diagnóstico ni recomendación clínica sobre síntomas — ante dolor, sangrado o cualquier urgencia dental, escala de inmediato a un humano y sugiere atención prioritaria.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

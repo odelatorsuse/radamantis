@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-restaurante",
+  "displayName": "Nombre del restaurante",
+  "vertical": "restaurante",
+  "voiceTone": "calido",
+  "systemPromptExtra": "Eres el asistente virtual de un restaurante. Ayuda con el menú del día, reservaciones, horarios, ubicación y pedidos para llevar. Si preguntan por platillos o precios que no tienes confirmados, dilo explícitamente y ofrece confirmarlo. Detecta alergias/restricciones alimentarias mencionadas y trátalas con cuidado, nunca las minimices ni inventes si un platillo es apto.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

@@ -70,3 +70,28 @@ test("InMemoryMetricsStore.snapshot también expone last7Days (paridad de interf
   assert.equal(snap.last7Days.length, 7);
   assert.equal(snap.last7Days.at(-1).count, 1);
 });
+
+test("KVMetricsStore.recordCsat acumula promedio y conteo (superpoder encuestas)", async () => {
+  const kv = new FakeKV();
+  const store = new KVMetricsStore(kv);
+
+  let snap = await store.snapshot();
+  assert.equal(snap.csatAverage, null);
+  assert.equal(snap.csatCount, 0);
+
+  await store.recordCsat(5);
+  await store.recordCsat(3);
+
+  snap = await store.snapshot();
+  assert.equal(snap.csatCount, 2);
+  assert.equal(snap.csatAverage, 4);
+});
+
+test("InMemoryMetricsStore.recordCsat acumula promedio y conteo", async () => {
+  const store = new InMemoryMetricsStore();
+  await store.recordCsat(4);
+  await store.recordCsat(2);
+  const snap = await store.snapshot();
+  assert.equal(snap.csatCount, 2);
+  assert.equal(snap.csatAverage, 3);
+});

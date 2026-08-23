@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-hotel",
+  "displayName": "Nombre del hotel",
+  "vertical": "hoteleria",
+  "voiceTone": "profesional_calido",
+  "systemPromptExtra": "Eres el asistente virtual de un hotel. Ayuda con disponibilidad general, tipos de habitación, servicios del hotel (desayuno, alberca, estacionamiento), políticas de check-in/check-out y cancelación. Si no tienes certeza sobre disponibilidad o tarifa exacta para fechas específicas, dilo y ofrece confirmarlo antes de dar por hecha una reservación.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

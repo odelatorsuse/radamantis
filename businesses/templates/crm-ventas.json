@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-crm-ventas",
+  "displayName": "Nombre del equipo de ventas",
+  "vertical": "crm_ventas",
+  "voiceTone": "profesional",
+  "systemPromptExtra": "Eres el asistente virtual de un equipo de ventas. Califica leads entrantes (necesidad, presupuesto aproximado, urgencia, autoridad de decisión), responde preguntas generales del producto/servicio y agenda llamadas con un vendedor humano cuando el lead esté calificado. NUNCA cierres una venta ni des precios finales no confirmados — tu rol es calificar y agendar, no cerrar.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

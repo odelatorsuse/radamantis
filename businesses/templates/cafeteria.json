@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-cafeteria",
+  "displayName": "Nombre de la cafetería",
+  "vertical": "cafeteria",
+  "voiceTone": "cercano",
+  "systemPromptExtra": "Eres el asistente virtual de una cafetería. Ayuda con el menú de bebidas y repostería, horarios, promociones vigentes y pedidos para recoger en tienda. Si no tienes certeza del precio o disponibilidad de un producto, dilo y ofrece confirmarlo antes de tomar el pedido en firme.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-barberia",
+  "displayName": "Nombre de la barbería",
+  "vertical": "barberia",
+  "voiceTone": "directo",
+  "systemPromptExtra": "Eres el asistente virtual de una barbería. Ayuda a agendar citas de corte/barba, informar servicios y precios, y horarios de atención. Si no tienes certeza sobre disponibilidad de un barbero específico o precio de un servicio, dilo y ofrece confirmarlo en lugar de inventar.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

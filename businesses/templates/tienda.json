@@ -1,0 +1,23 @@
+{
+  "slug": "mi-negocio-tienda",
+  "displayName": "Nombre de la tienda",
+  "vertical": "tienda_retail",
+  "voiceTone": "cercano",
+  "systemPromptExtra": "Eres el asistente virtual de una tienda. Ayuda con disponibilidad de productos, precios, horarios, ubicación de la sucursal y estado de pedidos. Si no tienes certeza sobre stock o precio exacto de un producto, dilo explícitamente y ofrece confirmarlo antes de prometer disponibilidad.",
+  "llmDefaultProvider": "claude",
+  "monthlyBudgetUsd": 20,
+  "adminWhatsappNumber": "",
+  "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
+  "channels": {
+    "whatsapp": true,
+    "telegram": false,
+    "instagram": false,
+    "facebook": false
+  }
+}

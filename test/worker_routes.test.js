@@ -94,3 +94,52 @@ test("GET /ruta-inexistente responde 404", async () => {
   const res = await worker.fetch(new Request("https://x.workers.dev/nope"), TEST_ENV);
   assert.equal(res.status, 404);
 });
+
+test("GET /admin/overview responde 401 sin credenciales cuando el negocio configuró Basic Auth", async () => {
+  const secureEnv = { ...TEST_ENV, ADMIN_PANEL_USER: "oscar", ADMIN_PANEL_PASSWORD: "secreto123" };
+  const res = await worker.fetch(new Request("https://x.workers.dev/admin/overview"), secureEnv);
+  assert.equal(res.status, 401);
+});
+
+test("GET /conexiones responde 200 con Basic Auth correcto", async () => {
+  const secureEnv = { ...TEST_ENV, ADMIN_PANEL_USER: "oscar", ADMIN_PANEL_PASSWORD: "secreto123" };
+  const header = `Basic ${Buffer.from("oscar:secreto123", "utf8").toString("base64")}`;
+  const res = await worker.fetch(
+    new Request("https://x.workers.dev/conexiones", { headers: { authorization: header } }),
+    secureEnv
+  );
+  assert.equal(res.status, 200);
+});
+
+test("scheduled() con el cron horario corre cazador + reactivación, no el reporte diario", async () => {
+  let whatsappCalls = 0;
+  globalThis.fetch = async () => {
+    whatsappCalls++;
+    return { ok: true, status: 200, text: async () => "" };
+  };
+  // Sin SESSIONS (KV) configurado, los sweeps devuelven {checked:0,...} de
+  // inmediato (ver session.js listAll) — lo que importa acá es que NO se
+  // dispare el reporte diario (que sí mandaría un WhatsApp con este env).
+  const env = { ...TEST_ENV, ADMIN_WHATSAPP_NUMBER: "5215500000000", WHATSAPP_PHONE_NUMBER_ID: "1", WHATSAPP_ACCESS_TOKEN: "t" };
+  await worker.scheduled({ cron: "0 * * * *" }, env, {});
+  assert.equal(whatsappCalls, 0);
+});
+
+test("scheduled() con el cron diario manda el reporte por WhatsApp", async () => {
+  let capturedBody;
+  globalThis.fetch = async (url, opts) => {
+    capturedBody = JSON.parse(opts.body);
+    return { ok: true, status: 200, text: async () => "" };
+  };
+  const env = { ...TEST_ENV, ADMIN_WHATSAPP_NUMBER: "5215500000000", WHATSAPP_PHONE_NUMBER_ID: "1", WHATSAPP_ACCESS_TOKEN: "t" };
+  await worker.scheduled({ cron: "0 14 * * *" }, env, {});
+  assert.match(capturedBody.text.body, /REPORTE DIARIO/);
+});
+
+test("scheduled() no lanza si algo falla adentro (loguea y sigue)", async () => {
+  globalThis.fetch = async () => {
+    throw new Error("fallo de red simulado");
+  };
+  const env = { ...TEST_ENV, ADMIN_WHATSAPP_NUMBER: "5215500000000", WHATSAPP_PHONE_NUMBER_ID: "1", WHATSAPP_ACCESS_TOKEN: "t" };
+  await assert.doesNotReject(() => worker.scheduled({ cron: "0 14 * * *" }, env, {}));
+});

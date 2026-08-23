@@ -8,6 +8,8 @@
   "monthlyBudgetUsd": 20,
   "adminWhatsappNumber": "",
   "kvSessionsId": "",
+  "reviewUrl": "",
+  "defaultServicePriceUsd": null,
   "whatsapp": {
     "phoneNumberId": "",
     "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
