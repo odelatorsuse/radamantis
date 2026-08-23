@@ -42,6 +42,30 @@ function tomlEscape(str) {
   return String(str ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
 }
 
+// El id del KV namespace vive en businesses/<slug>.json (campo
+// "kvSessionsId"), NO se edita a mano en wrangler.toml — así el generador
+// puede correr tantas veces como se quiera sin pisar un id ya provisionado.
+function renderKvBlock(biz) {
+  const kvId = biz.kvSessionsId;
+  if (kvId) {
+    return [
+      `# KV del negocio (sesiones + métricas, prefijos "session:"/"metrics:").`,
+      `[[env.${biz.slug}.kv_namespaces]]`,
+      `binding = "SESSIONS"`,
+      `id = "${tomlEscape(kvId)}"`,
+    ];
+  }
+  return [
+    `# KV del negocio (sesiones + métricas). Sin provisionar todavía:`,
+    `#   1) npx wrangler kv namespace create SESSIONS --env ${biz.slug}`,
+    `#   2) copiar el "id" que imprime a businesses/${biz.slug}.json -> "kvSessionsId"`,
+    `#   3) node scripts/gen-wrangler-envs.mjs`,
+    `# [[env.${biz.slug}.kv_namespaces]]`,
+    `# binding = "SESSIONS"`,
+    `# id = ""`,
+  ];
+}
+
 function renderEnvBlock(biz) {
   const workerName = `radamantis-${biz.slug}`;
   const lines = [
@@ -61,11 +85,7 @@ function renderEnvBlock(biz) {
     `WHATSAPP_PHONE_NUMBER_ID = "${tomlEscape(biz.whatsapp?.phoneNumberId || "")}"`,
     `WHATSAPP_WEBHOOK_VERIFY_TOKEN = "${tomlEscape(biz.whatsapp?.webhookVerifyToken || "")}"`,
     ``,
-    `# KV propio del negocio (aislamiento de sesiones/métricas por bot).`,
-    `# Crear con: npx wrangler kv namespace create SESSIONS --env ${biz.slug}`,
-    `# [[env.${biz.slug}.kv_namespaces]]`,
-    `# binding = "SESSIONS"`,
-    `# id = ""`,
+    ...renderKvBlock(biz),
     ``,
     `# Secrets (NO van en este archivo, cargar con wrangler secret put --env ${biz.slug}):`,
     `#   WHATSAPP_ACCESS_TOKEN, WHATSAPP_APP_SECRET, ANTHROPIC_API_KEY / OPENAI_API_KEY (según LLM_DEFAULT_PROVIDER)`,

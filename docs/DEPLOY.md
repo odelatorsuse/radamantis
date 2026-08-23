@@ -114,21 +114,34 @@ Desde Claude: pídeme "da de alta el negocio X" y yo genero el JSON +
 corro el generador; el `wrangler deploy` final lo corres tú (o me pegas
 salida de comandos y seguimos iterando).
 
-## 7. Pendiente conocido: persistencia (KV)
+## 7. Activar persistencia real (KV) — recomendado antes de operar en serio
 
-Hoy las sesiones (`src/core/session.js`) y las métricas
-(`src/core/metrics.js`) viven en memoria del Worker — se resetean en cada
-cold start. Para producción real:
+Sin esto, las sesiones (`src/core/session.js`) y las métricas
+(`src/core/metrics.js`) viven en memoria del Worker y se resetean en cada
+cold start (cada bot "olvida" el historial de conversación y el dashboard
+vuelve a cero cada tanto). Un solo namespace KV cubre ambas cosas — sesiones
+bajo la clave `session:*`, métricas bajo `metrics:*`.
 
 ```bash
 npx wrangler kv namespace create SESSIONS --env ch-veterinarios
-# copiar el "id" que imprime y pegarlo en wrangler.toml,
-# dentro del bloque [env.ch-veterinarios] (descomentar [[env.ch-veterinarios.kv_namespaces]])
+# imprime algo como: { binding = "SESSIONS", id = "abcd1234..." }
 ```
 
-Repetir por cada negocio. (`src/core/session.js` ya sabe usar KV
-automáticamente en cuanto detecta el binding `SESSIONS` — no requiere
-cambios de código.)
+Copia ese `id` en `businesses/ch-veterinarios.json`, campo `"kvSessionsId"`
+(NO se edita `wrangler.toml` a mano — se regenera):
+
+```json
+"kvSessionsId": "abcd1234...",
+```
+
+```bash
+node scripts/gen-wrangler-envs.mjs
+npx wrangler deploy --env ch-veterinarios
+```
+
+Repetir (namespace + id + redeploy) por cada negocio. Ni `session.js` ni
+`metrics.js` necesitan cambios de código — detectan el binding `SESSIONS`
+automáticamente y lo usan en cuanto existe.
 
 ## 8. Integraciones de canal (WhatsApp, Telegram, etc.)
 

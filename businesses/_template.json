@@ -7,6 +7,7 @@
   "llmDefaultProvider": "claude",
   "monthlyBudgetUsd": 20,
   "adminWhatsappNumber": "",
+  "kvSessionsId": "",
   "whatsapp": {
     "phoneNumberId": "",
     "webhookVerifyToken": "elige-un-string-secreto-cualquiera"

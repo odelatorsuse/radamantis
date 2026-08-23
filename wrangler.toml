@@ -44,8 +44,10 @@ ADMIN_WHATSAPP_NUMBER = ""
 WHATSAPP_PHONE_NUMBER_ID = ""
 WHATSAPP_WEBHOOK_VERIFY_TOKEN = "radamantis-ch-veterinarios-verify"
 
-# KV propio del negocio (aislamiento de sesiones/métricas por bot).
-# Crear con: npx wrangler kv namespace create SESSIONS --env ch-veterinarios
+# KV del negocio (sesiones + métricas). Sin provisionar todavía:
+#   1) npx wrangler kv namespace create SESSIONS --env ch-veterinarios
+#   2) copiar el "id" que imprime a businesses/ch-veterinarios.json -> "kvSessionsId"
+#   3) node scripts/gen-wrangler-envs.mjs
 # [[env.ch-veterinarios.kv_namespaces]]
 # binding = "SESSIONS"
 # id = ""
