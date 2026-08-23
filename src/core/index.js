@@ -7,13 +7,14 @@
 //   GET  /conexiones              -> marketplace de integraciones
 //   POST /chat                    -> prueba manual del pipeline sin canal real
 //                                     body: { "conversationId": "test-1", "text": "hola" }
+//   GET  /webhook/:channel        -> handshake de verificación (ej. Meta/WhatsApp)
 //   POST /webhook/:channel        -> dispatch a src/integrations/<channel>
 //
 // El cron diario (superpoder #7 "reporte") se registra vía el handler
 // `scheduled` más abajo cuando se agregue el trigger en wrangler.toml
 // (aún pendiente: [triggers] crons = [...]).
 
-import { handleWebhook, ChannelNotImplementedError, buildTestMessage } from "./router.js";
+import { handleWebhook, handleWebhookVerification, ChannelNotImplementedError, buildTestMessage } from "./router.js";
 import { handleIncomingMessage } from "./orchestrator.js";
 import { createMetricsStore } from "./metrics.js";
 import { renderOverviewPage, renderConexionesPage } from "./adminUI.js";
@@ -83,6 +84,25 @@ export default {
     }
 
     const webhookMatch = url.pathname.match(/^\/webhook\/([a-z_]+)$/);
+
+    // Handshake de verificación (Meta/WhatsApp llama GET una vez al
+    // configurar la URL del webhook en su dashboard).
+    if (request.method === "GET" && webhookMatch) {
+      const channel = webhookMatch[1];
+      try {
+        const challenge = await handleWebhookVerification(channel, url, env);
+        if (challenge !== null) {
+          return new Response(challenge, { status: 200, headers: { "content-type": "text/plain" } });
+        }
+        return json({ ok: false, error: "Verificación de webhook fallida" }, { status: 403 });
+      } catch (err) {
+        if (err instanceof ChannelNotImplementedError) {
+          return json({ ok: false, error: err.message }, { status: 501 });
+        }
+        return json({ ok: false, error: err?.message || "Error interno" }, { status: 500 });
+      }
+    }
+
     if (request.method === "POST" && webhookMatch) {
       const channel = webhookMatch[1];
       try {

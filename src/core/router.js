@@ -3,9 +3,10 @@
 // (src/integrations/<channel>/index.js) debe exportar:
 //   - parseIncoming(rawBody, headers, env) -> NormalizedMessage[]
 //   - sendMessage(outgoing: OutgoingMessage, env) -> Promise<void>
-//   - verifyWebhook(request, env) -> boolean | Promise<boolean>   (firma/verify token)
-// Mientras esas integraciones están en STUB, este router expone también un
-// canal "test" en memoria para poder ejercitar el pipeline completo
+//   - verifyWebhook(request, rawBody, env) -> boolean | Promise<boolean>   (firma del POST)
+//   - verifyWebhookChallenge(url, env) -> string | null                    (handshake GET, opcional)
+// Mientras algunas integraciones siguen en STUB, este router expone también
+// un canal "test" en memoria para poder ejercitar el pipeline completo
 // (orchestrator + llm) sin depender de WhatsApp/Telegram/Meta reales.
 
 import { handleIncomingMessage } from "./orchestrator.js";
@@ -42,6 +43,31 @@ export function buildTestMessage({ conversationId, externalUserId, text }) {
   };
 }
 
+async function loadIntegration(channel) {
+  const loader = INTEGRATION_MODULES[channel];
+  if (!loader) throw new ChannelNotImplementedError(channel);
+  const integration = await loader();
+  if (typeof integration.parseIncoming !== "function") {
+    throw new ChannelNotImplementedError(channel);
+  }
+  return integration;
+}
+
+/**
+ * Handshake de verificación GET (Meta/WhatsApp, y otros proveedores que usen
+ * el mismo patrón hub.challenge). Devuelve el challenge a responder en texto
+ * plano, o null si el canal no soporta/valida el handshake.
+ * @param {string} channel
+ * @param {URL} url
+ * @param {Record<string, any>} env
+ * @returns {Promise<string | null>}
+ */
+export async function handleWebhookVerification(channel, url, env) {
+  const integration = await loadIntegration(channel);
+  if (typeof integration.verifyWebhookChallenge !== "function") return null;
+  return integration.verifyWebhookChallenge(url, env);
+}
+
 /**
  * Procesa un webhook entrante de un canal soportado: parsea, ejecuta el
  * pipeline del orchestrator por cada mensaje normalizado, y envía la
@@ -57,20 +83,17 @@ export async function handleWebhook(channel, request, env) {
     throw new Error('El canal "test" se usa vía handleIncomingMessage/buildTestMessage directamente, no por webhook.');
   }
 
-  const loader = INTEGRATION_MODULES[channel];
-  if (!loader) throw new ChannelNotImplementedError(channel);
+  const integration = await loadIntegration(channel);
 
-  const integration = await loader();
-  if (typeof integration.parseIncoming !== "function") {
-    throw new ChannelNotImplementedError(channel);
-  }
+  // El body se lee UNA sola vez (Request.text() no es reentrante) porque
+  // verifyWebhook (firma HMAC) también lo necesita crudo.
+  const rawBody = await request.text();
 
   if (typeof integration.verifyWebhook === "function") {
-    const valid = await integration.verifyWebhook(request, env);
+    const valid = await integration.verifyWebhook(request, rawBody, env);
     if (!valid) throw new Error(`Firma de webhook inválida para canal "${channel}"`);
   }
 
-  const rawBody = await request.text();
   const messages = await integration.parseIncoming(rawBody, request.headers, env);
 
   const replies = [];

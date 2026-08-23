@@ -41,10 +41,15 @@ SYSTEM_PROMPT_EXTRA = "Eres el asistente de una clínica veterinaria. Ayuda a ag
 LLM_DEFAULT_PROVIDER = "openai"
 LLM_MONTHLY_BUDGET_USD = "20"
 ADMIN_WHATSAPP_NUMBER = ""
+WHATSAPP_PHONE_NUMBER_ID = ""
+WHATSAPP_WEBHOOK_VERIFY_TOKEN = "radamantis-ch-veterinarios-verify"
 
 # KV propio del negocio (aislamiento de sesiones/métricas por bot).
 # Crear con: npx wrangler kv namespace create SESSIONS --env ch-veterinarios
 # [[env.ch-veterinarios.kv_namespaces]]
 # binding = "SESSIONS"
 # id = ""
+
+# Secrets (NO van en este archivo, cargar con wrangler secret put --env ch-veterinarios):
+#   WHATSAPP_ACCESS_TOKEN, WHATSAPP_APP_SECRET, ANTHROPIC_API_KEY / OPENAI_API_KEY (según LLM_DEFAULT_PROVIDER)
 # END GENERATED ENVS

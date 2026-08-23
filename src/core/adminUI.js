@@ -175,7 +175,7 @@ const CONNECTOR_CATEGORIES = [
   {
     title: "Canales de mensajería",
     items: [
-      { name: "WhatsApp Business API", path: "src/integrations/whatsapp", status: "pending" },
+      { name: "WhatsApp Business API", path: "src/integrations/whatsapp", status: "ok" },
       { name: "Telegram Bot API", path: "src/integrations/telegram", status: "pending" },
       { name: "Instagram Messaging", path: "src/integrations/instagram", status: "pending" },
       { name: "Facebook Messenger", path: "src/integrations/facebook", status: "pending" },

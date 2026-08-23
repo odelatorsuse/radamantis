@@ -7,6 +7,10 @@
   "llmDefaultProvider": "claude",
   "monthlyBudgetUsd": 20,
   "adminWhatsappNumber": "",
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "elige-un-string-secreto-cualquiera"
+  },
   "channels": {
     "whatsapp": true,
     "telegram": false,

@@ -7,6 +7,10 @@
   "llmDefaultProvider": "openai",
   "monthlyBudgetUsd": 20,
   "adminWhatsappNumber": "",
+  "whatsapp": {
+    "phoneNumberId": "",
+    "webhookVerifyToken": "radamantis-ch-veterinarios-verify"
+  },
   "channels": {
     "whatsapp": true,
     "telegram": false,

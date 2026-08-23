@@ -58,12 +58,17 @@ function renderEnvBlock(biz) {
     `LLM_DEFAULT_PROVIDER = "${tomlEscape(biz.llmDefaultProvider || "claude")}"`,
     `LLM_MONTHLY_BUDGET_USD = "${tomlEscape(biz.monthlyBudgetUsd ?? "")}"`,
     `ADMIN_WHATSAPP_NUMBER = "${tomlEscape(biz.adminWhatsappNumber || "")}"`,
+    `WHATSAPP_PHONE_NUMBER_ID = "${tomlEscape(biz.whatsapp?.phoneNumberId || "")}"`,
+    `WHATSAPP_WEBHOOK_VERIFY_TOKEN = "${tomlEscape(biz.whatsapp?.webhookVerifyToken || "")}"`,
     ``,
     `# KV propio del negocio (aislamiento de sesiones/métricas por bot).`,
     `# Crear con: npx wrangler kv namespace create SESSIONS --env ${biz.slug}`,
     `# [[env.${biz.slug}.kv_namespaces]]`,
     `# binding = "SESSIONS"`,
     `# id = ""`,
+    ``,
+    `# Secrets (NO van en este archivo, cargar con wrangler secret put --env ${biz.slug}):`,
+    `#   WHATSAPP_ACCESS_TOKEN, WHATSAPP_APP_SECRET, ANTHROPIC_API_KEY / OPENAI_API_KEY (según LLM_DEFAULT_PROVIDER)`,
   ];
   return lines.join("\n");
 }
